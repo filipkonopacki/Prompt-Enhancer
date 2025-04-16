@@ -1,8 +1,10 @@
 import os
+import random
+
 from transformers import AutoTokenizer
 from datasets import load_dataset, load_from_disk
 
-from definitions import tokenized_dataset_path
+from utils.definitions import tokenized_dataset_path, instruction_templates
 
 # Models
 t5 = "google/flan-t5-base"
@@ -14,7 +16,8 @@ tokenizer = AutoTokenizer.from_pretrained(t5, use_fast=True)
 
 def format_data(examples):
     # Format inputs and outputs as lists
-    inputs = [f"Enhance this image generation prompt:\n{short_prompt}" for short_prompt in examples['short_prompt']]
+    instruction = random.choice(instruction_templates)
+    inputs = [f"{instruction}:\n{short_prompt}" for short_prompt in examples['short_prompt']]
     outputs = [long_prompt for long_prompt in examples['long_prompt']]
 
     return {
