@@ -1,0 +1,3 @@
+ask:
+- bfloat16, gradient checkpointing, or other memory tricks.
+- how padding affects training efficiency or label masking
