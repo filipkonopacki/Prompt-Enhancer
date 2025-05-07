@@ -2,9 +2,13 @@ import torch
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import Seq2SeqTrainingArguments, AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainer
 
-from definitions import output_dir, logging_dir, final_lora, timestamp
+from utils.definitions import output_dir, logging_dir, final_lora, timestamp
 from data.format_dataset import get_dataset
 from evaluate import load
+from torch.utils.tensorboard import SummaryWriter
+
+
+writer = SummaryWriter(log_dir=logging_dir)
 
 # Models
 model_name = "google/flan-t5-base"
@@ -40,6 +44,11 @@ def compute_metrics(eval_preds):
             print(f"Original: {decoded_labels[i][:100]}...")
             print(f"Enhanced: {decoded_preds[i][:100]}...")
             print("---")
+
+    # Log metrics to TensorBoard
+    for k, v in result.items():
+        score = v.mid.fmeasure
+        writer.add_scalar(f"eval/rouge_{k}", score, global_step=trainer.state.global_step)
 
     return {
         f"rouge_{k}": v.mid.fmeasure
@@ -107,6 +116,8 @@ trainer = Seq2SeqTrainer(
 )
 
 trainer.train()
+writer.close()
+
 peft_model.save_pretrained(final_lora)
 print(f"LoRA adapter saved to {final_lora}")
 
